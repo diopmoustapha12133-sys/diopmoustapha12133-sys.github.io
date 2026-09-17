@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Diop Chop Cafe Touba</title>
+<script src="https://sdk.minepi.com/pi-sdk.js"></script>
+<script>Pi.init({version:"2.0",sandbox:true})</script>
+<style>body{font-family:sans-serif;text-align:center;background:#fff8e1;padding:20px}.card{background:white;border-radius:15px;padding:20px;max-width:400px;margin:auto;box-shadow:0 4px 10px #999}button{background:#7b3f00;color:white;padding:15px;border:none;border-radius:10px;width:100%;font-size:18px;margin-top:10px}.wave{background:#1ec5ff}</style>
+</head><body>
+<div class="card"><h1>☕ Diop Chop Café Touba</h1><p>Bienvenue</p><hr><p><b>Café Touba</b>: 500F / 0.1 Pi</p><p><b>Thiéré + Café</b>: 1500F / 0.3 Pi</p><button onclick="payer()">Payer en Pi</button><button class="wave">Payer Wave</button><p id="msg"></p></div>
+<script>async function payer(){document.getElementById('msg').innerText="Connexion Pi...";try{await Pi.authenticate(['payments'],()=>{});await Pi.createPayment({amount:0.1,memo:"Cafe Touba Diop",metadata:{}},{onReadyForServerApproval:id=>{document.getElementById('msg').innerText="Approuvé "+id},onReadyForServerCompletion:(id,txid)=>{document.getElementById('msg').innerText="✅ Payé! "+txid},onCancel:()=>{document.getElementById('msg').innerText="Annulé"},onError:e=>{document.getElementById('msg').innerText="Erreur "+e}});}catch(e){document.getElementById('msg').innerText=e}}</script>
+</body></html>
