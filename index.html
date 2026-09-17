@@ -1,24 +1,54 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>Diop Chop</title><script src="https://sdk.minepi.com/pi-sdk.js"></script></head><body style="text-align:center;padding:20px;background:#fdf6e3;font-family:sans-serif"><div style="background:white;padding:20px;border-radius:15px;max-width:360px;margin:auto;box-shadow:0 4px 12px rgba(0,0,0,.1)"><h2>☕ Diop Chop Touba</h2><p style="color:green;font-weight:bold">v18 SERVEUR OK ✅</p><button id="btn" style="width:100%;padding:18px;background:#8B4513;color:white;border:none;border-radius:12px;font-weight:bold;font-size:19px">PAYER 0.1 Pi TEST</button><p id="msg" style="font-weight:bold;margin-top:15px;color:#8B4513"></p></div><script>
-const WORKER_URL="https://diop-chop-approve.diopmoustapha12133.workers.dev";
-function log(t){document.getElementById("msg").innerText=t;}
-document.getElementById("btn").onclick=async()=>{
-  Pi.init({version:"2.0",sandbox:true});
-  const auth=await Pi.authenticate(['username','payments'],()=>{});
-  log("Connecté "+auth.user.username+"...");
-  await Pi.createPayment({amount:0.1,memo:"Diop Chop Touba",metadata:{order:"touba"}},{
-    onReadyForServerApproval: async function(pid){
-      log("⏳ Approbation via serveur...");
-      let r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({paymentId:pid,action:"approve"})});
-      log(r.ok?"✅ APPROUVÉ ! Glisse pour payer":"Erreur approve "+await r.text());
-    },
-    onReadyForServerCompletion: async function(pid,txid){
-      log("⏳ Finalisation...");
-      let r=await fetch(WORKER_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({paymentId:pid,txid:txid,action:"complete"})});
-      log(r.ok?"✅✅ PAIEMENT VALIDÉ 10/10 !":"Erreur complete "+await r.text());
-    },
-    onCancel:()=>log("Annulé"),
-    onError:(e)=>log("Erreur: "+e.message)
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DIOP-CHOP PAIEMENT PI</title>
+<script src="https://sdk.minepi.io/pi-sdk.js"></script>
+</head>
+<body style="font-family:Arial;text-align:center;padding:20px">
+<h2>🍗 DIOP-CHOP Touba</h2>
+<h3>Paiement Pi Testnet</h3>
+<button id="payBtn" style="padding:15px 30px;font-size:18px;background:#8e44ad;color:white;border:none;border-radius:10px">PAYER 0.1 Pi TEST</button>
+<p id="status"></p>
+<script>
+const WORKER_URL = "https://diop-chop-approve.diopmoustapha12133.workers.dev";
+const Pi = window.Pi;
+Pi.init({version:"2.0", sandbox:true});
+
+async function callWorker(paymentId, action, txid){
+  const r = await fetch(WORKER_URL, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({paymentId, action, txid})
   });
+  return await r.text();
+}
+
+document.getElementById("payBtn").onclick = async () => {
+  try{
+    document.getElementById("status").innerText = "Connexion Pi...";
+    const payment = await Pi.createPayment({
+      amount: 0.1,
+      memo: "Commande DIOP-CHOP Touba",
+      metadata: {orderId:"touba-"+Date.now()}
+    }, {
+      onReadyForServerApproval: async (paymentId) => {
+        document.getElementById("status").innerText = "Approbation via serveur...";
+        const res = await callWorker(paymentId, "approve");
+        document.getElementById("status").innerText = "Approuvé ! "+res;
+      },
+      onReadyForServerCompletion: async (paymentId, txid) => {
+        document.getElementById("status").innerText = "Finalisation...";
+        const res = await callWorker(paymentId, "complete", txid);
+        document.getElementById("status").innerText = "✅ COMPLETED VERT ! Commande enregistrée ! "+res;
+      },
+      onCancel: () => { document.getElementById("status").innerText = "Paiement annulé"; },
+      onError: (e) => { document.getElementById("status").innerText = "Erreur: "+e.message; }
+    });
+  }catch(e){ document.getElementById("status").innerText = "Erreur: "+e.message; }
 };
-</script></body></html>
+</script>
+</body>
+</html>
 
