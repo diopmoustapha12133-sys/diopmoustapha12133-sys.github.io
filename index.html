@@ -1,23 +1,19 @@
-<!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>Diop Chop</title><script src="https://sdk.minepi.com/pi-sdk.js"></script><style>body{font-family:sans-serif;text-align:center;padding:20px;background:#fdf6e3}.card{background:white;padding:20px;border-radius:15px;max-width:350px;margin:auto}button{width:100%;padding:15px;margin:8px 0;border:none;border-radius:12px;font-weight:bold;font-size:17px}.pi{background:#8B4513;color:white}.wave{background:#00cfff;color:white}</style></head><body><div class="card"><h1>☕ Diop Chop Café Touba</h1><p>Bienvenue</p><p><b>Café Touba:</b> 500F / 0.1 Pi</p><p><b>Thiéré + Café:</b> 1500F / 0.3 Pi</p><button class="pi" onclick="payer(0.1)">Payer en Pi</button><button class="wave">Payer Wave</button><p id="msg"></p></div><script>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>Diop Chop</title><script src="https://sdk.minepi.com/pi-sdk.js"></script><style>body{font-family:sans-serif;text-align:center;padding:20px;background:#fdf6e3}.card{background:white;padding:20px;border-radius:15px;max-width:350px;margin:auto}button{width:100%;padding:15px;margin:8px 0;border:none;border-radius:12px;font-weight:bold;font-size:17px}.pi{background:#8B4513;color:white}</style></head><body><div class="card"><h1>☕ Diop Chop Café Touba</h1><p><b>Café Touba:</b> 500F / 0.1 Pi</p><button class="pi" onclick="payer(0.1)">Payer en Pi</button><p id="msg"></p></div><script>
 Pi.init({version:"2.0",sandbox:true});
-function onInc(p){console.log("incomplete",p); return Pi.completePayment(p.identifier)}
+const API_KEY="p2lbmzuz1bwrresfagnj5chnicb5lydktt0ifwhrpgu1pkddfjocwjsim7nkmtdq";
+function onInc(p){return Pi.completePayment(p.identifier)}
 async function payer(m){
-  let el=document.getElementById('msg'); el.innerText="Connexion Pi...";
-  try{
-    await Pi.authenticate(['username','payments'],onInc);
-    el.innerText="Création paiement...";
-    await Pi.createPayment({
-      amount:m,
-      memo:"Cafe Touba - Diop Chop",
-      metadata:{produit:"cafe_touba",quantite:1,prix:m}
-    },{
-      onReadyForServerApproval:function(id){el.innerText="Paiement "+id+" approuvé"; console.log("approve",id)},
-      onReadyForServerCompletion:function(id,txid){el.innerText="✅ Paiement validé "+txid; alert("Paiement réussi! Va valider dans Develop")},
-      onCancel:function(id){el.innerText="Paiement annulé"},
-      onError:function(err){el.innerText="Erreur: "+err.message; console.log(err)}
-    });
-  }catch(e){el.innerText="Erreur: "+e.message}
+ let el=document.getElementById('msg'); el.innerText="Connexion...";
+ try{
+  await Pi.authenticate(['username','payments'],onInc);
+  el.innerText="Création paiement...";
+  await Pi.createPayment({amount:m,memo:"Cafe Touba Diop Chop",metadata:{produit:"cafe_touba",prix:m,shop:"diop"}},{
+   onReadyForServerApproval: async function(id){el.innerText="Approbation..."; await fetch("https://api.testnet.minepi.com/v2/payments/"+id+"/approve",{method:"POST",headers:{"Authorization":"Bearer "+API_KEY}});},
+   onReadyForServerCompletion: async function(id,txid){el.innerText="Finalisation..."; await fetch("https://api.testnet.minepi.com/v2/payments/"+id+"/complete",{method:"POST",headers:{"Authorization":"Bearer "+API_KEY,"Content-Type":"application/json"},body:JSON.stringify({txid:txid})}); el.innerText="✅ Validé "+txid; alert("Paiement réussi! Va dans Develop");},
+   onCancel:function(id){el.innerText="Annulé"},
+   onError:function(e){el.innerText="Erreur "+e.message}
+  });
+ }catch(e){el.innerText="Erreur "+e.message}
 }
 </script></body></html>
 
