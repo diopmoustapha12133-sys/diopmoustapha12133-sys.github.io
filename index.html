@@ -1,24 +1,9 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>Diop Chop</title><script src="https://sdk.minepi.com/pi-sdk.js"></script><style>body{text-align:center;padding:20px;background:#fdf6e3;font-family:sans-serif}.card{background:white;padding:20px;border-radius:15px;max-width:360px;margin:auto}button{width:100%;padding:15px;background:#8B4513;color:white;border:none;border-radius:10px;font-weight:bold;font-size:18px}</style></head><body><div class="card"><h1>☕ Diop Chop</h1><p>Café Touba - Test 0.1 Pi</p><button onclick="payer()">PAYER EN PI</button><p id="msg" style="font-weight:bold;margin-top:15px"></p></div><script>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>Diop Chop</title><script src="https://sdk.minepi.com/pi-sdk.js"></script></head><body style="text-align:center;padding:20px;background:#fdf6e3"><div style="background:white;padding:20px;border-radius:15px;max-width:360px;margin:auto"><h2>☕ Diop Chop Touba</h2><p>Test FINAL 0.1 Pi</p><button id="btn" style="width:100%;padding:16px;background:#8B4513;color:white;border:none;border-radius:10px;font-weight:bold;font-size:18px">PAYER EN PI</button><p id="msg" style="font-weight:bold;margin-top:15px;color:#8B4513"></p></div><script>
 Pi.init({version:"2.0",sandbox:true});
-const KEY="2xlmcbcylponfx3eeseqv07kbjhlzxnss3ajt2lfimpaclkbkmyrrtjfllqp1xjs";
-async function payer(){
- let m=document.getElementById('msg'); m.innerText="Connexion Pi...";
+const API_KEY="b9cdzr1x1if7nsqpuqucvktowkbldayqgrfrhfq59yoyrf0iii7ner03hzf3ddbn";
+document.getElementById("btn").onclick=async()=>{
+ let m=document.getElementById("msg"); m.innerText="Connexion...";
  try{
-  await Pi.authenticate(['username','payments'],p=>{return fetch("https://corsproxy.io/?"+encodeURIComponent("https://api.testnet.minepi.com/v2/payments/"+p.identifier+"/complete"),{method:"POST",headers:{"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify({txid:p.transaction.txid})})});
-  await Pi.createPayment({amount:0.1,memo:"Diop Chop Test",metadata:{cafe:"touba"}},{
-   onReadyForServerApproval: async function(id){
-    m.innerText="Approbation...";
-    let r=await fetch("https://corsproxy.io/?"+encodeURIComponent("https://api.testnet.minepi.com/v2/payments/"+id+"/approve"),{method:"POST",headers:{"Authorization":"Bearer "+KEY}});
-    m.innerText=r.ok?"Approuvé ✅ Glisse pour payer":"Erreur "+r.status;
-   },
-   onReadyForServerCompletion: async function(id,txid){
-    m.innerText="Finalisation...";
-    let r=await fetch("https://corsproxy.io/?"+encodeURIComponent("https://api.testnet.minepi.com/v2/payments/"+id+"/complete"),{method:"POST",headers:{"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify({txid:txid})});
-    if(r.ok){m.innerText="✅ PAIEMENT VALIDÉ "+txid; alert("Bravo! Retourne dans Develop > Checklist, tu auras 10/10");}
-    else m.innerText="Erreur complete";
-   },
-   onCancel:()=>m.innerText="Annulé", onError:(e)=>m.innerText="Erreur "+e.message
-  });
- }catch(e){m.innerText="Erreur: "+e.message;}
-}
-</script></body></html>
+  let a=await Pi.authenticate(['username','payments'],()=>{});
+  m.innerText="Connecté "+a.user.username+" - paiement...";
+  await Pi.create
