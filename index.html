@@ -1,28 +1,24 @@
-wmbjdx6086lmnc2yiutlycoj7dmidsjnbsqjvmxar9w1xfzecddpkvab9rd73wml<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>Diop Chop</title><script src="https://sdk.minepi.com/pi-sdk.js"></script><style>body{text-align:center;padding:20px;background:#fdf6e3;font-family:sans-serif}.card{background:white;padding:20px;border-radius:15px;max-width:360px;margin:auto}button{width:100%;padding:15px;background:#8B4513;color:white;border:none;border-radius:10px;font-weight:bold}</style></head><body><div class="card"><h1>☕ Diop Chop</h1><p>Test 0.1 Pi</p><button onclick="payer()">PAYER EN PI</button><p id="msg"></p></div><script>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>Diop Chop</title><script src="https://sdk.minepi.com/pi-sdk.js"></script><style>body{text-align:center;padding:20px;background:#fdf6e3;font-family:sans-serif}.card{background:white;padding:20px;border-radius:15px;max-width:360px;margin:auto}button{width:100%;padding:15px;background:#8B4513;color:white;border:none;border-radius:10px;font-weight:bold;font-size:18px}</style></head><body><div class="card"><h1>☕ Diop Chop</h1><p>Café Touba - Test 0.1 Pi</p><button onclick="payer()">PAYER EN PI</button><p id="msg" style="font-weight:bold;margin-top:15px"></p></div><script>
 Pi.init({version:"2.0",sandbox:true});
+const KEY="2xlmcbcylponfx3eeseqv07kbjhlzxnss3ajt2lfimpaclkbkmyrrtjfllqp1xjs";
 async function payer(){
- let m=document.getElementById('msg');
- m.innerText="Connexion...";
+ let m=document.getElementById('msg'); m.innerText="Connexion Pi...";
  try{
-  let auth=await Pi.authenticate(['username','payments'],function(p){return fetch("https://api.testnet.minepi.com/v2/payments/"+p.identifier+"/complete",{method:"POST",headers:{"Authorization":"Bearer p2lbmzuz1bwrresfagnj5chnicb5lydktt0ifwhrpgu1pkddfjocwjsim7nkmtdq","Content-Type":"application/json"},body:JSON.stringify({txid:p.transaction.txid})})).then(()=>m.innerText="Ancien paiement complété")});
-  m.innerText="Connecté: "+auth.user.username;
-  await Pi.createPayment({amount:0.1,memo:"Diop Chop",metadata:{shop:"diop"}},{
+  await Pi.authenticate(['username','payments'],p=>{return fetch("https://corsproxy.io/?"+encodeURIComponent("https://api.testnet.minepi.com/v2/payments/"+p.identifier+"/complete"),{method:"POST",headers:{"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify({txid:p.transaction.txid})})});
+  await Pi.createPayment({amount:0.1,memo:"Diop Chop Test",metadata:{cafe:"touba"}},{
    onReadyForServerApproval: async function(id){
-    m.innerText="Approbation... ID:"+id;
-    // Pour le test checklist, on approuve côté client directement
-    let r=await fetch("https://api.testnet.minepi.com/v2/payments/"+id+"/approve",{method:"POST",headers:{"Authorization":"Bearer "+auth.accessToken}});
-    if(r.ok){m.innerText="Approuvé! Confirme dans wallet...";} else {let t=await r.text(); m.innerText="Approve: "+r.status+" "+t;}
+    m.innerText="Approbation...";
+    let r=await fetch("https://corsproxy.io/?"+encodeURIComponent("https://api.testnet.minepi.com/v2/payments/"+id+"/approve"),{method:"POST",headers:{"Authorization":"Bearer "+KEY}});
+    m.innerText=r.ok?"Approuvé ✅ Glisse pour payer":"Erreur "+r.status;
    },
    onReadyForServerCompletion: async function(id,txid){
-    m.innerText="Complete: "+txid+" ...";
-    let r2=await fetch("https://api.testnet.minepi.com/v2/payments/"+id+"/complete",{method:"POST",headers:{"Authorization":"Bearer p2lbmzuz1bwrresfagnj5chnicb5lydktt0ifwhrpgu1pkddfjocwjsim7nkmtdq","Content-Type":"application/json"},body:JSON.stringify({txid:txid})});
-    let txt=await r2.text();
-    if(r2.ok){m.innerText="✅ VALIDÉ "+txid;} else {m.innerText="Complete erreur "+r2.status+" "+txt;}
+    m.innerText="Finalisation...";
+    let r=await fetch("https://corsproxy.io/?"+encodeURIComponent("https://api.testnet.minepi.com/v2/payments/"+id+"/complete"),{method:"POST",headers:{"Authorization":"Bearer "+KEY,"Content-Type":"application/json"},body:JSON.stringify({txid:txid})});
+    if(r.ok){m.innerText="✅ PAIEMENT VALIDÉ "+txid; alert("Bravo! Retourne dans Develop > Checklist, tu auras 10/10");}
+    else m.innerText="Erreur complete";
    },
-   onCancel:function(){m.innerText="Annulé"},
-   onError:function(e){m.innerText="Erreur: "+e.message;}
+   onCancel:()=>m.innerText="Annulé", onError:(e)=>m.innerText="Erreur "+e.message
   });
- }catch(e){m.innerText="Erreur générale: "+e.message;}
+ }catch(e){m.innerText="Erreur: "+e.message;}
 }
 </script></body></html>
-
