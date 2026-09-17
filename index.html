@@ -1,19 +1,28 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>Diop Chop</title><script src="https://sdk.minepi.com/pi-sdk.js"></script><style>body{font-family:sans-serif;text-align:center;padding:20px;background:#fdf6e3}.card{background:white;padding:20px;border-radius:15px;max-width:350px;margin:auto}button{width:100%;padding:15px;margin:8px 0;border:none;border-radius:12px;font-weight:bold;font-size:17px}.pi{background:#8B4513;color:white}</style></head><body><div class="card"><h1>☕ Diop Chop Café Touba</h1><p><b>Café Touba:</b> 500F / 0.1 Pi</p><button class="pi" onclick="payer(0.1)">Payer en Pi</button><p id="msg"></p></div><script>
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>Diop Chop</title><script src="https://sdk.minepi.com/pi-sdk.js"></script><style>body{text-align:center;padding:20px;background:#fdf6e3;font-family:sans-serif}.card{background:white;padding:20px;border-radius:15px;max-width:360px;margin:auto}button{width:100%;padding:15px;background:#8B4513;color:white;border:none;border-radius:10px;font-weight:bold}</style></head><body><div class="card"><h1>☕ Diop Chop</h1><p>Test 0.1 Pi</p><button onclick="payer()">PAYER EN PI</button><p id="msg"></p></div><script>
 Pi.init({version:"2.0",sandbox:true});
-const API_KEY="p2lbmzuz1bwrresfagnj5chnicb5lydktt0ifwhrpgu1pkddfjocwjsim7nkmtdq";
-function onInc(p){return Pi.completePayment(p.identifier)}
-async function payer(m){
- let el=document.getElementById('msg'); el.innerText="Connexion...";
+async function payer(){
+ let m=document.getElementById('msg');
+ m.innerText="Connexion...";
  try{
-  await Pi.authenticate(['username','payments'],onInc);
-  el.innerText="Création paiement...";
-  await Pi.createPayment({amount:m,memo:"Cafe Touba Diop Chop",metadata:{produit:"cafe_touba",prix:m,shop:"diop"}},{
-   onReadyForServerApproval: async function(id){el.innerText="Approbation..."; await fetch("https://api.testnet.minepi.com/v2/payments/"+id+"/approve",{method:"POST",headers:{"Authorization":"Bearer "+API_KEY}});},
-   onReadyForServerCompletion: async function(id,txid){el.innerText="Finalisation..."; await fetch("https://api.testnet.minepi.com/v2/payments/"+id+"/complete",{method:"POST",headers:{"Authorization":"Bearer "+API_KEY,"Content-Type":"application/json"},body:JSON.stringify({txid:txid})}); el.innerText="✅ Validé "+txid; alert("Paiement réussi! Va dans Develop");},
-   onCancel:function(id){el.innerText="Annulé"},
-   onError:function(e){el.innerText="Erreur "+e.message}
+  let auth=await Pi.authenticate(['username','payments'],function(p){return fetch("https://api.testnet.minepi.com/v2/payments/"+p.identifier+"/complete",{method:"POST",headers:{"Authorization":"Bearer p2lbmzuz1bwrresfagnj5chnicb5lydktt0ifwhrpgu1pkddfjocwjsim7nkmtdq","Content-Type":"application/json"},body:JSON.stringify({txid:p.transaction.txid})})).then(()=>m.innerText="Ancien paiement complété")});
+  m.innerText="Connecté: "+auth.user.username;
+  await Pi.createPayment({amount:0.1,memo:"Diop Chop",metadata:{shop:"diop"}},{
+   onReadyForServerApproval: async function(id){
+    m.innerText="Approbation... ID:"+id;
+    // Pour le test checklist, on approuve côté client directement
+    let r=await fetch("https://api.testnet.minepi.com/v2/payments/"+id+"/approve",{method:"POST",headers:{"Authorization":"Bearer "+auth.accessToken}});
+    if(r.ok){m.innerText="Approuvé! Confirme dans wallet...";} else {let t=await r.text(); m.innerText="Approve: "+r.status+" "+t;}
+   },
+   onReadyForServerCompletion: async function(id,txid){
+    m.innerText="Complete: "+txid+" ...";
+    let r2=await fetch("https://api.testnet.minepi.com/v2/payments/"+id+"/complete",{method:"POST",headers:{"Authorization":"Bearer p2lbmzuz1bwrresfagnj5chnicb5lydktt0ifwhrpgu1pkddfjocwjsim7nkmtdq","Content-Type":"application/json"},body:JSON.stringify({txid:txid})});
+    let txt=await r2.text();
+    if(r2.ok){m.innerText="✅ VALIDÉ "+txid;} else {m.innerText="Complete erreur "+r2.status+" "+txt;}
+   },
+   onCancel:function(){m.innerText="Annulé"},
+   onError:function(e){m.innerText="Erreur: "+e.message;}
   });
- }catch(e){el.innerText="Erreur "+e.message}
+ }catch(e){m.innerText="Erreur générale: "+e.message;}
 }
 </script></body></html>
 
