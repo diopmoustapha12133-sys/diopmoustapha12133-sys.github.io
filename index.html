@@ -1,9 +1,34 @@
-<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>Diop Chop</title><script src="https://sdk.minepi.com/pi-sdk.js"></script></head><body style="text-align:center;padding:20px;background:#fdf6e3"><div style="background:white;padding:20px;border-radius:15px;max-width:360px;margin:auto"><h2>☕ Diop Chop Touba</h2><p>Test FINAL 0.1 Pi</p><button id="btn" style="width:100%;padding:16px;background:#8B4513;color:white;border:none;border-radius:10px;font-weight:bold;font-size:18px">PAYER EN PI</button><p id="msg" style="font-weight:bold;margin-top:15px;color:#8B4513"></p></div><script>
-Pi.init({version:"2.0",sandbox:true});
+<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width"><title>Diop Chop</title><script src="https://sdk.minepi.com/pi-sdk.js"></script></head><body style="text-align:center;padding:20px;background:#fdf6e3;font-family:sans-serif"><div style="background:white;padding:20px;border-radius:15px;max-width:360px;margin:auto"><h2>☕ Diop Chop Touba</h2><p id="status" style="color:blue">Prêt - v15 DEBUG</p><button id="btn" style="width:100%;padding:16px;background:#8B4513;color:white;border:none;border-radius:10px;font-weight:bold;font-size:18px">PAYER EN PI</button><p id="msg" style="font-weight:bold;margin-top:15px;word-break:break-all"></p></div><script>
 const API_KEY="b9cdzr1x1if7nsqpuqucvktowkbldayqgrfrhfq59yoyrf0iii7ner03hzf3ddbn";
+function log(t){document.getElementById("msg").innerText=t; console.log(t);}
 document.getElementById("btn").onclick=async()=>{
- let m=document.getElementById("msg"); m.innerText="Connexion...";
- try{
-  let a=await Pi.authenticate(['username','payments'],()=>{});
-  m.innerText="Connecté "+a.user.username+" - paiement...";
-  await Pi.create
+  log("Clic détecté...");
+  if(typeof Pi==="undefined"){ log("❌ ERREUR: Tu n'es PAS dans Pi Browser! Ouvre Pi Browser et tape l'adresse."); return; }
+  try{
+    Pi.init({version:"2.0",sandbox:true});
+    log("Pi SDK OK, connexion...");
+    const auth=await Pi.authenticate(['username','payments'],()=>{});
+    log("✅ Connecté: "+auth.user.username+" - création paiement...");
+    await Pi.createPayment({amount:0.1,memo:"Diop Chop Test",metadata:{test:1}},{
+      onReadyForServerApproval: async function(paymentId){
+        log("Paiement ID "+paymentId+" - Approbation en cours...");
+        try{
+          const res=await fetch("https://api.testnet.minepi.com/v2/payments/"+paymentId+"/approve",{method:"POST",headers:{"Authorization":"Key "+API_KEY}});
+          const txt=await res.text();
+          if(res.ok){ log("✅ APPROUVÉ! Va dans ton wallet Testnet et glisse"); }
+          else{ log("❌ Approve échoué "+res.status+" : "+txt); }
+        }catch(e){ log("❌ Erreur réseau approve: "+e.message); }
+      },
+      onReadyForServerCompletion: async function(paymentId,txid){
+        log("Completion txid "+txid+"...");
+        const res=await fetch("https://api.testnet.minepi.com/v2/payments/"+paymentId+"/complete",{method:"POST",headers:{"Authorization":"Key "+API_KEY,"Content-Type":"application/json"},body:JSON.stringify({txid:txid})});
+        const txt=await res.text();
+        log(res.ok?"✅✅ VALIDÉ! Retourne dans develop.pi c'est 10/10":"❌ Complete échoué "+res.status+" "+txt);
+      },
+      onCancel:()=>log("Annulé par toi"),
+      onError:(e)=>log("❌ Erreur Pi: "+e.message)
+    });
+  }catch(e){ log("❌ ERREUR GLOBALE: "+e.message); }
+};
+window.onload=()=>{ if(typeof Pi==="undefined"){ document.getElementById("status").innerText="⚠️ OUVRE DANS PI BROWSER!"; } else { document.getElementById("status").innerText="✅ Pi SDK détecté - prêt"; } };
+</script></body></html>
